@@ -112,7 +112,7 @@ use constant cPGNoRecs	=> '0E0';
 =cut
 #==============================================================================
 
-our $VERSION 				= 1.8;							# Set our version
+our $VERSION 				= 1.81;							# Set our version
 our $BUILD					= '2006-02-07 15:20';		# BUILD
 
 struct (
@@ -809,7 +809,7 @@ sub SetDH() {
 
 	if (!$DBH) {
 		$DBH = DBI->connect(
-							'dbi:mysql:dbname=' . $self->dbname(), 
+							'dbi:mysql:database=' . $self->dbname(), 
 							$self->dbuser(),
 							$self->dbpass()
 							) or croak($DBI::errstr); 	
