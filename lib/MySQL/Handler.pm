@@ -1,10 +1,22 @@
 =head1 NAME
 
-MySQL::Handler - Accessors for MySQL data 
+MySQL::Handler - Builds upon DBD::mysql for advanced CGI web apps
 
 =head1 DESCRIPTION
 
-Accessors for MySQL data.  Simplifies data access through a series of standard class methods.
+MySQL::Handler builds upon the foundation set by
+DBI and DBD::mysql to create a superset of methods for tying together
+some of the basic interface concepts of DB management when used
+in a web server environment. MySQL::Handler is meant to build 
+upon the strengths of DBD::mysql and DBI and add common usability 
+features for a variety of Internet applications.
+
+MySQL::Handler encapsulates error message handling, information
+message handling, simple caching of requests through a complete
+iteration of a server CGI request.  You will also find some key
+elements that hook the CGI class to the DBI class to simplify
+data IO to & from web forms and dynamic pages.
+
 
 =head1 SYNOPSIS
 
@@ -112,8 +124,8 @@ use constant cPGNoRecs	=> '0E0';
 =cut
 #==============================================================================
 
-our $VERSION 				= 1.81;							# Set our version
-our $BUILD					= '2006-02-07 15:20';		# BUILD
+our $VERSION 				= 1.9;							# Set our version
+our $BUILD					= '2006-02-08 23:31';		# BUILD
 
 struct (
 		dbname	=> '$',
@@ -457,6 +469,10 @@ sub DoLE {
 
  The value of the field.
 
+ Returns 0 and lasterror() is set to a value if an error occurs
+               lasterror() is blank if there was no error
+
+
 =item Example
 
  my $objPGDATA = new MySQL::Handler::HTML ('mytable!PGHkeyfld' => 'id');
@@ -509,10 +525,14 @@ sub Field {
 
 					my $where = (($options{WHERE} ne '') ? qq[WHERE $options{WHERE}] : 'WHERE ' . $self->data("$table!PGHkeyfld") . qq[ = $options{KEY}]);
 					$self->PrepLEX( -cmd => qq[SELECT * FROM $table $where], -name => "$table!PGHfield" );
-					$self->data("$table!PGHfhr", $self->GetRecord("$table!PGHfield"));
-					if ($self->data("$table!PGHfhr")) {
-						my $keyfld = uc($self->data("$table!PGHkeyfld"));
-						$self->data("$table!key", $self->data("$table!PGHfhr")->{$keyfld});
+					$retval = $self->PrepLEX( -cmd => qq[SELECT * FROM $table $where], -name => "$table!PGHfield" );
+					if ($retval) {
+						$self->data(ERRMSG,'');	
+						$self->data("$table!PGHfhr", $self->GetRecord("$table!PGHfield"));
+						if ($self->data("$table!PGHfhr")) {
+							my $keyfld = uc($self->data("$table!PGHkeyfld"));
+							$self->data("$table!key", $self->data("$table!PGHfhr")->{$keyfld});
+						}
 					}
 				}		
 			}		
@@ -1010,6 +1030,12 @@ __END__
  or at http://www.gnu.org/copyleft/gpl.html
 
 =head1 REVISION HISTORY
+
+ v1.9 - Feb 2006 (yup, already)
+      Update Field() to prevent SIGV error when WHERE clause causes error on statement
+		Field() now returns 0 + lasterror() set to value if failed execute
+		            returns fldval + lasterror() is blank if execution OK
+
 
  v1.8 - Feb 2006
       MySQL::Handler created from Postgres::Handler module
