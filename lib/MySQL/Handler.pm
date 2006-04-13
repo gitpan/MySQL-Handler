@@ -67,8 +67,8 @@ None by default.
 #
 #==============================================================================
 
-package MySQL::Handler;									# Define the package name
 use CGI::Carp;
+package MySQL::Handler;									# Define the package name
 use CGI::Util qw(rearrange);
 use Class::Struct;
 use DBI;
@@ -124,8 +124,8 @@ use constant cPGNoRecs	=> '0E0';
 =cut
 #==============================================================================
 
-our $VERSION 				= 1.9;							# Set our version
-our $BUILD					= '2006-02-08 23:31';		# BUILD
+our $VERSION 				= 2.1;							# Set our version
+our $BUILD					= '2006-04-13 11:20';		# BUILD
 
 struct (
 		dbname	=> '$',
@@ -826,6 +826,7 @@ sub Quote() {
 #----------------------------
 sub SetDH() {
 	my $self = shift;
+	my $DBH = $self->dbh();
 
 	if (!$DBH) {
 		$DBH = DBI->connect(
@@ -833,12 +834,11 @@ sub SetDH() {
 							$self->dbuser(),
 							$self->dbpass()
 							) or croak($DBI::errstr); 	
+		$DBH->{AutoCommit} = 1;
+		$DBH->{ChopBlanks} = 1;
+	
+		$self->dbh($DBH);
 	}
-
-	$DBH->{AutoCommit} = 1;
-	$DBH->{ChopBlanks} = 1;
-
-	$self->dbh($DBH);
 }
 
 #--------------------------------------------------------------------
@@ -1030,6 +1030,12 @@ __END__
  or at http://www.gnu.org/copyleft/gpl.html
 
 =head1 REVISION HISTORY
+
+ v2.1 - Apr 2006
+      Fixed problem with SetDH - database handle management
+
+ v2.0 - Feb 2006
+      Moved CGI::Carp outside of the package to prevent perl -w warnings
 
  v1.9 - Feb 2006 (yup, already)
       Update Field() to prevent SIGV error when WHERE clause causes error on statement
